@@ -138,3 +138,38 @@ test.describe('WCB – REG030 Independent Worker Letter', () => {
     await DocumentPage.saveAndCloseDocumentInformation();
   });
 });
+
+
+
+
+// Input box where Policy Number is typed
+const policyNumberInput = () => getLocator('#0TSPc-real');
+
+// Dropdown / Open icon
+const policyDropdownButton = () => getLocator('#0TSPc-btn');
+
+// Dropdown caret icon (alternate)
+const policyDropdownIcon = () => getLocator('#0TSPc-icon');
+
+// Dropdown popup container
+const policyTypeList = () => getLocator('#0TSPc-pp');
+
+// Specific option selection (like "Policy" or "Customer")
+const policyTypeOption = (type: string) => getLocatorByText(type);
+
+
+
+
+
+export async function selectPolicyType(type: string) {
+  await click(policyDropdownButton()); // or policyDropdownIcon()
+  await expectElementToBeVisible(policyTypeList());
+  await click(policyTypeOption(type));
+}
+
+
+
+
+await selectPolicyType('Policy');   // Select "Policy" from dropdown
+await fill(policyNumberInput(), 'E0000877');
+
