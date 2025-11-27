@@ -1,3 +1,4 @@
+// tests/pages/preferred-pom/wcb-document-info-page.ts
 import { expect } from '@playwright/test';
 import { click, fill } from '../../../src/wcb-automation/utils/action-utils';
 import { expectElementToBeVisible } from '../../../src/wcb-automation/utils/assert-utils';
@@ -9,107 +10,92 @@ import {
 } from '../../../src/wcb-automation/utils/locator-utils';
 
 /**
- * LOCATORS
- * (all wrapped in functions – same style as wcb-login-page.ts)
+ *  LOCATORS (wrapped in functions, same style as wcb-login-page.ts)
+ *  – adjust text / ids if they differ slightly in your app
  */
 
-// --- Step 18: Open the policy from Global Search ---
-
-// Global toolbar icon (first click in your codegen)
-const globalToolbarButton = () => getLocator('#FEKQc-btn');
-
-// Policy option in menu
+// STEP 18 – Open policy from Global Search
+const globalToolbarBtn = () => getLocator('#FEKQc-btn');
 const policyMenuItem = () => getLocatorByText('Policy');
-
-// Global Search textbox
 const globalSearchBox = () =>
   getLocatorByRole('textbox', { name: 'Global Search' });
-
-// Policy checkbox in search results
 const policyCheckbox = () =>
   getLocatorByRole('checkbox', { name: 'checkbox' });
+const finishBtn = () =>
+  getLocatorByRole('button', { name: 'Finish' });
 
-// Finish button to open the policy
-const finishButton = () =>
-  getLocatorByRole('button', { name: /Finish/ });
-
-// --- Step 19: Add Document REG030 ---
-
+// STEP 19 – Add Document REG030
 const addDocumentMenuItem = () =>
-  getLocatorByRole('menuitem', { name: /Add Document/ });
-
-const documentField = () =>
+  getLocatorByRole('menuitem', { name: 'Add Document' });
+// if there is a textbox for document code, keep this; otherwise you can remove it
+const documentTextbox = () =>
   getLocatorByRole('textbox', { name: /Document/ });
 
-const reg030Row = () => getLocatorByText('REG030'); // row with REG030
+const reg030Row = () => getLocatorByText('REG030');
 
 const documentInformationWindow = () =>
   getLocatorByText('Document Information');
 
-// --- Step 20: Recipients / Data Elements / Turnaround ---
-
+// STEP 20 – Recipients, Data Elements, Turnaround
 const recipientsTab = () => getLocatorByText('Recipients');
-const recipientsPanel = () => getLocatorByLabel('Recipients');
+const recipientsSection = () => getLocatorByLabel('Recipients');
 
 const dataElementsTab = () => getLocatorByText('Data Elements');
-const dataElementsPanel = () => getLocatorByLabel('Document Information Document');
+const dataElementsSection = () =>
+  getLocatorByText('Data Elements'); // you can switch to getLocatorByLabel if needed
 
 const turnaroundTab = () => getLocatorByText('Turnaround');
 const expectedReturnDaysField = () =>
   getLocatorByRole('textbox', { name: 'Expected Return Days' });
 
-// --- Step 21: Save & Close ---
-
+// STEP 21 – Save & Close
 const saveButton = () =>
   getLocatorByLabel('Document Information Document').getByRole('button', {
     name: 'Save',
   });
-
 const closeButton = () => getLocatorByText('Close');
 
 /**
- * STEP FUNCTIONS
- * These map directly to steps 18–21 in your document.
+ *  STEP FUNCTIONS – map directly to steps 18–21
  */
 
 // Step 18: Open the policy
 export async function openPolicyFromGlobalSearch(policyNumber: string) {
-  await click(globalToolbarButton());
+  await click(globalToolbarBtn());
   await click(policyMenuItem());
 
   await click(globalSearchBox());
   await fill(globalSearchBox(), policyNumber);
 
-  // usually Enter will run search, but in your codegen you just selected checkbox
+  // normally Enter or search, but your codegen selected row then checkbox
   await click(policyCheckbox());
-  await click(finishButton());
+  await click(finishBtn());
 }
 
-// Step 19: Select Add Document → REG030 and open Document Information
+// Step 19: Add Document REG030 and open Document Information
 export async function addReg030Document() {
   await click(addDocumentMenuItem());
 
-  await click(documentField());
-  await fill(documentField(), 'REG030');
+  // if Document textbox is required, keep these two lines
+  await click(documentTextbox());
+  await fill(documentTextbox(), 'REG030');
 
   await click(reg030Row());
-  await click(finishButton());
+  await click(finishBtn());
 
   await expectElementToBeVisible(documentInformationWindow());
 }
 
 // Step 20: Confirm Recipients & Data Elements are correct
 export async function verifyRecipientsAndDataElements() {
-  // Recipients tab + panel visible
   await click(recipientsTab());
-  await expectElementToBeVisible(recipientsPanel());
+  await expectElementToBeVisible(recipientsSection());
 
-  // Data Elements tab + area visible
   await click(dataElementsTab());
-  await expectElementToBeVisible(dataElementsPanel());
+  await expectElementToBeVisible(dataElementsSection());
 }
 
-// Step 20 (Turnaround part): Confirm Expected Return Days is 300
+// Step 20 (Turnaround): Confirm Expected Return Days is 300
 export async function verifyExpectedReturnDaysIs300() {
   await click(turnaroundTab());
   await expectElementToBeVisible(expectedReturnDaysField());
@@ -117,7 +103,7 @@ export async function verifyExpectedReturnDaysIs300() {
   await expect(expectedReturnDaysField()).toHaveValue('300');
 }
 
-// Step 21: Save and Close
+// Step 21: Save using toolbar in window, then Close
 export async function saveAndCloseDocumentInformation() {
   await click(saveButton());
   await click(closeButton());
@@ -126,34 +112,29 @@ export async function saveAndCloseDocumentInformation() {
 
 
 
-import { test } from '@playwright/test';
-import {
-  navigateToWCBLoginPage,
-  loginSuccessfully,
-} from '../pages/preferred-pom/wcb-login-page';
-import {
-  openPolicyFromGlobalSearch,
-  addReg030Document,
-  verifyRecipientsAndDataElements,
-  verifyExpectedReturnDaysIs300,
-  saveAndCloseDocumentInformation,
-} from '../pages/preferred-pom/wcb-document-info-page';
 
-test('REG030 – Steps 18–21: verify Expected Return Days = 300 and save', async () => {
-  // Login (reuse your existing login page functions)
-  await navigateToWCBLoginPage();
-  await loginSuccessfully();
+// tests/specs/admin-proc-IW.spec.ts
+import { test } from '../../src/wcb-automation/setup/page-setup';
+import * as LoginPage from '../pages/preferred-pom/wcb-login-page';
+import * as DocumentPage from '../pages/preferred-pom/wcb-document-info-page';
 
-  // Step 18: Open the policy
-  await openPolicyFromGlobalSearch('E0000877'); // use the same policy no. you used in codegen
+test.describe('WCB – REG030 Independent Worker Letter', () => {
+  test.only('Steps 18–21 – Verify Expected Return Days = 300 and save', async () => {
+    // Login (reuse your existing helpers)
+    await LoginPage.navigateToWCBLoginPage();
+    await LoginPage.loginSuccessfully();
 
-  // Step 19: Add Document REG030
-  await addReg030Document();
+    // Step 18: Open the policy
+    await DocumentPage.openPolicyFromGlobalSearch('E0000877'); // use policy number from your steps/codegen
 
-  // Step 20: Confirm Recipients & Data Elements, and Expected Return Days
-  await verifyRecipientsAndDataElements();
-  await verifyExpectedReturnDaysIs300();
+    // Step 19: Add Document REG030
+    await DocumentPage.addReg030Document();
 
-  // Step 21: Save and Close the Document Information window
-  await saveAndCloseDocumentInformation();
+    // Step 20: Confirm Recipients & Data Elements, and Expected Return Days
+    await DocumentPage.verifyRecipientsAndDataElements();
+    await DocumentPage.verifyExpectedReturnDaysIs300();
+
+    // Step 21: Save and Close
+    await DocumentPage.saveAndCloseDocumentInformation();
+  });
 });
