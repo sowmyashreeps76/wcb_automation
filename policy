@@ -3,87 +3,124 @@ import { click, fill } from '../../../src/wcb-automation/utils/action-utils';
 import { expectElementToBeVisible } from '../../../src/wcb-automation/utils/assert-utils';
 import {
   getLocator,
+  getLocatorByText,
   getLocatorByRole,
+  getLocatorByLabel,
 } from '../../../src/wcb-automation/utils/locator-utils';
 
-// ---------- Locators (using same pattern as login page) ----------
+/**
+ * LOCATORS
+ * (all wrapped in functions – same style as wcb-login-page.ts)
+ */
 
-// Global toolbar / policy search (step 18)
-const globalPolicyButton = () => getLocator('#FEKQc-btn');                   // <- use your stored locator here
-const policyMenu         = () => getLocatorByRole('menuitem', { name: 'Policy' });
-const globalSearchBox    = () => getLocatorByRole('textbox', { name: 'Global Search' });
-const policyCheckbox     = () => getLocatorByRole('checkbox', { name: 'checkbox' });
-const finishButton       = () => getLocatorByRole('button', { name: 'Finish' });
+// --- Step 18: Open the policy from Global Search ---
 
-// Add Document – REG030 (step 19)
-const addDocumentMenu    = () => getLocatorByRole('menuitem', { name: 'Add Document' });
-const documentTextbox    = () => getLocatorByRole('textbox', { name: 'Document' });
-const reg030Row          = () => getLocator('text=REG030');                   // or any locator you stored
-const documentInfoWindow = () => getLocator('text=Document Information');     // header/title text
+// Global toolbar icon (first click in your codegen)
+const globalToolbarButton = () => getLocator('#FEKQc-btn');
 
-// Tabs & grids (step 20)
-const recipientsTab      = () => getLocator('text=Recipients');
-const recipientsGrid     = () => getLocatorByRole('grid', { name: /Recipient/i });
+// Policy option in menu
+const policyMenuItem = () => getLocatorByText('Policy');
 
-const dataElementsTab    = () => getLocator('text=Data Elements');
-const dataElementsGrid   = () => getLocatorByRole('grid', { name: /Data Element/i });
+// Global Search textbox
+const globalSearchBox = () =>
+  getLocatorByRole('textbox', { name: 'Global Search' });
 
-const turnaroundTab      = () => getLocator('text=Turnaround');
-const expectedReturnDays = () =>
+// Policy checkbox in search results
+const policyCheckbox = () =>
+  getLocatorByRole('checkbox', { name: 'checkbox' });
+
+// Finish button to open the policy
+const finishButton = () =>
+  getLocatorByRole('button', { name: /Finish/ });
+
+// --- Step 19: Add Document REG030 ---
+
+const addDocumentMenuItem = () =>
+  getLocatorByRole('menuitem', { name: /Add Document/ });
+
+const documentField = () =>
+  getLocatorByRole('textbox', { name: /Document/ });
+
+const reg030Row = () => getLocatorByText('REG030'); // row with REG030
+
+const documentInformationWindow = () =>
+  getLocatorByText('Document Information');
+
+// --- Step 20: Recipients / Data Elements / Turnaround ---
+
+const recipientsTab = () => getLocatorByText('Recipients');
+const recipientsPanel = () => getLocatorByLabel('Recipients');
+
+const dataElementsTab = () => getLocatorByText('Data Elements');
+const dataElementsPanel = () => getLocatorByLabel('Document Information Document');
+
+const turnaroundTab = () => getLocatorByText('Turnaround');
+const expectedReturnDaysField = () =>
   getLocatorByRole('textbox', { name: 'Expected Return Days' });
 
-// Toolbar on Document Information window (step 21)
-const saveButton         = () => getLocatorByRole('button', { name: 'Save' });
-const closeButton        = () => getLocatorByRole('button', { name: 'Close' });
+// --- Step 21: Save & Close ---
 
-// ---------- Step functions ----------
+const saveButton = () =>
+  getLocatorByLabel('Document Information Document').getByRole('button', {
+    name: 'Save',
+  });
 
-// Step 18 – open the policy from Global Search
+const closeButton = () => getLocatorByText('Close');
+
+/**
+ * STEP FUNCTIONS
+ * These map directly to steps 18–21 in your document.
+ */
+
+// Step 18: Open the policy
 export async function openPolicyFromGlobalSearch(policyNumber: string) {
-  await click(globalPolicyButton);
-  await click(policyMenu);
+  await click(globalToolbarButton());
+  await click(policyMenuItem());
 
-  await click(globalSearchBox);
-  await fill(globalSearchBox, policyNumber);
+  await click(globalSearchBox());
+  await fill(globalSearchBox(), policyNumber);
 
-  await click(policyCheckbox);
-  await click(finishButton);
+  // usually Enter will run search, but in your codegen you just selected checkbox
+  await click(policyCheckbox());
+  await click(finishButton());
 }
 
-// Step 19 – Add Document REG030 and open Document Information
+// Step 19: Select Add Document → REG030 and open Document Information
 export async function addReg030Document() {
-  await click(addDocumentMenu);
+  await click(addDocumentMenuItem());
 
-  await click(documentTextbox);
-  await fill(documentTextbox, 'REG030');
+  await click(documentField());
+  await fill(documentField(), 'REG030');
 
-  await click(reg030Row);
-  await click(finishButton);
+  await click(reg030Row());
+  await click(finishButton());
 
-  await expectElementToBeVisible(documentInfoWindow);
+  await expectElementToBeVisible(documentInformationWindow());
 }
 
-// Step 20 – Confirm Recipients & Data Elements, then Turnaround → Expected Return Days
+// Step 20: Confirm Recipients & Data Elements are correct
 export async function verifyRecipientsAndDataElements() {
-  await click(recipientsTab);
-  await expectElementToBeVisible(recipientsGrid);
+  // Recipients tab + panel visible
+  await click(recipientsTab());
+  await expectElementToBeVisible(recipientsPanel());
 
-  await click(dataElementsTab);
-  await expectElementToBeVisible(dataElementsGrid);
+  // Data Elements tab + area visible
+  await click(dataElementsTab());
+  await expectElementToBeVisible(dataElementsPanel());
 }
 
-export async function verifyExpectedReturnDaysIs(expectedDays: string) {
-  await click(turnaroundTab);
-  await expectElementToBeVisible(expectedReturnDays);
+// Step 20 (Turnaround part): Confirm Expected Return Days is 300
+export async function verifyExpectedReturnDaysIs300() {
+  await click(turnaroundTab());
+  await expectElementToBeVisible(expectedReturnDaysField());
 
-  // check the value is 300
-  await expect(expectedReturnDays()).toHaveValue(expectedDays);
+  await expect(expectedReturnDaysField()).toHaveValue('300');
 }
 
-// Step 21 – Save and Close
+// Step 21: Save and Close
 export async function saveAndCloseDocumentInformation() {
-  await click(saveButton);
-  await click(closeButton);
+  await click(saveButton());
+  await click(closeButton());
 }
 
 
@@ -98,26 +135,25 @@ import {
   openPolicyFromGlobalSearch,
   addReg030Document,
   verifyRecipientsAndDataElements,
-  verifyExpectedReturnDaysIs,
+  verifyExpectedReturnDaysIs300,
   saveAndCloseDocumentInformation,
 } from '../pages/preferred-pom/wcb-document-info-page';
 
-test('REG030 – verify Expected Return Days is 300 and save', async () => {
-  // Login (your existing page helpers)
+test('REG030 – Steps 18–21: verify Expected Return Days = 300 and save', async () => {
+  // Login (reuse your existing login page functions)
   await navigateToWCBLoginPage();
   await loginSuccessfully();
 
-  // Step 18 – open the policy
-  await openPolicyFromGlobalSearch('E0000877'); // use the same policy number from your steps
+  // Step 18: Open the policy
+  await openPolicyFromGlobalSearch('E0000877'); // use the same policy no. you used in codegen
 
-  // Step 19 – Add Document REG030
+  // Step 19: Add Document REG030
   await addReg030Document();
 
-  // Step 20 – verify Recipients & Data Elements and Expected Return Days
+  // Step 20: Confirm Recipients & Data Elements, and Expected Return Days
   await verifyRecipientsAndDataElements();
-  await verifyExpectedReturnDaysIs('300');
+  await verifyExpectedReturnDaysIs300();
 
-  // Step 21 – Save and Close
+  // Step 21: Save and Close the Document Information window
   await saveAndCloseDocumentInformation();
 });
-
